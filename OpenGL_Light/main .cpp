@@ -37,7 +37,6 @@ GLdouble ZFar = 40.0f;
 static float angles[] = { 0.0, 0.0, 0.0 }; //Camera position
 int model = 1; // 1 - points, 2 - lines, 3 - triangles, 4 - teapot-wire, 5 - teapot-solid
 int mode = 1; // 1 - camera rotation, 2 - light_1 rotation, 3 - light_2 rotation
-int textureMode = 0; // 0 - texture off 1, 1 - texture on
 int currentTexture = 0;
 int verticesNumber; // Number of vertices
 GLdouble pix2angle = 1.0;  // Pixel to angle ratio
@@ -134,18 +133,7 @@ void render() {
     glRotatef(angles[1], 0, 1, 0);
     glRotatef(angles[2], 0, 0, 1);
 
-    switch (textureMode) {
-	case 1:
-		glDisable(GL_TEXTURE_2D);
-		break;
-	case 2:
-		glEnable(GL_TEXTURE_2D);
-        currentTexture = (currentTexture + 1) % textureIDs.size();
-        glBindTexture(GL_TEXTURE_2D, textureIDs[currentTexture]);
-
-		break;
-    }
-
+  
     // Render the selected model
     switch (model) {
     case 1:
@@ -179,13 +167,12 @@ void keyboard_keys(unsigned char key, GLsizei x, GLsizei y)
 {
     switch (key) {
     case 'j':
-		textureMode = 1;
+        glDisable(GL_TEXTURE_2D);
         break;
     case 'k':
-        textureMode = 2;
-        break;
-    case 'l':
-        textureMode = 2;
+        glEnable(GL_TEXTURE_2D);
+        currentTexture = (currentTexture + 1) % textureIDs.size();
+        glBindTexture(GL_TEXTURE_2D, textureIDs[currentTexture]);
         break;
     case 'u':
 		mode = 1;
@@ -265,6 +252,9 @@ void init_menu() {
     cout << "[i] rotate light 1" << endl;
     cout << "[o] rotate light 2" << endl;
     cout << "_______________________________" << endl;
+    cout << "[j] Turn off texture" << endl;
+    cout << "[k] Toggle textures" << endl;
+    cout << "_______________________________" << endl;
     cout << "Enter number of vertices: ";
     cin >> verticesNumber;
     egg.setDensity(verticesNumber);
@@ -273,10 +263,6 @@ void init_menu() {
 
 // Initialize OpenGL settings and scene objects
 void init() {
-
-    GLbyte* pBytes;
-    GLint ImWidth, ImHeight, ImComponents;
-    GLenum ImFormat;
 
     // Set the clear color for the color buffer to a dark gray shade (RGBA: 0.1, 0.1, 0.1, 1.0)
     // This color will be used when clearing the color buffer with glClear
@@ -313,27 +299,44 @@ void init() {
     // Set the shading model to smooth (Gouraud shading), which interpolates vertex colors across polygons
     glShadeModel(GL_SMOOTH);
 
-    GLuint textureID_1, textureID_2;
-    glGenTextures(1, &textureID_1);
-    glBindTexture(GL_TEXTURE_2D, textureID_1);
-    pBytes = texture_1.LoadTGAImage("tekstury/D1_t.tga", &ImWidth, &ImHeight, &ImComponents, &ImFormat);
-    glTexImage2D(GL_TEXTURE_2D, 0, ImComponents, ImWidth, ImHeight, 0, ImFormat, GL_UNSIGNED_BYTE, pBytes);
-    free(pBytes);
+    glFrontFace(GL_CCW); // Counter-clockwise is front-facing
+    glCullFace(GL_BACK); // Cull back-facing polygons
+   
+    texture_1.LoadTGAImage("tekstury/D1_t.tga");
+	texture_1.setTexture();
 
+    // Specify the minification filter for the texture.
+    // GL_TEXTURE_MIN_FILTER determines how OpenGL filters the texture
+    // when it is displayed at a smaller size than the original image.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear filtering for smooth transitions.
 
-    glGenTextures(1, &textureID_2);
-    glBindTexture(GL_TEXTURE_2D, textureID_2);
-	pBytes = texture_2.LoadTGAImage("tekstury/D2_t.tga", &ImWidth, &ImHeight, &ImComponents, &ImFormat);
-	glTexImage2D(GL_TEXTURE_2D, 0, ImComponents, ImWidth, ImHeight, 0, ImFormat, GL_UNSIGNED_BYTE, pBytes);
-	free(pBytes);
+    // Specify the magnification filter for the texture.
+    // GL_TEXTURE_MAG_FILTER determines how OpenGL filters the texture
+    // when it is displayed at a larger size than the original image.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear filtering for smooth transitions.
 
-	textureIDs[1] = textureID_1;
-	textureIDs[2] = textureID_2;
+    // Set the wrapping mode for the S (horizontal) texture coordinate.
+    // GL_TEXTURE_WRAP_S defines the behavior for texture coordinates
+    // outside the 0.0 to 1.0 range. GL_REPEAT causes the texture to repeat.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 
-    glEnable(GL_TEXTURE_2D);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    // Set the wrapping mode for the T (vertical) texture coordinate.
+    // GL_TEXTURE_WRAP_T defines the behavior for texture coordinates
+    // outside the 0.0 to 1.0 range. GL_REPEAT causes the texture to repeat.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Second texture
+    texture_2.LoadTGAImage("tekstury/D2_t.tga");
+    texture_2.setTexture();
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Add textures to the map
+	textureIDs[0] = texture_1.getTetureID();
+    textureIDs[1] = texture_2.getTetureID();
 
     glBindTexture(GL_TEXTURE_2D, textureIDs[currentTexture]);
 }

@@ -7,7 +7,16 @@
 
 class Texture
 {
+private:
+	GLuint textureID;
+	char* FileName;
+	GLbyte* pBytes;
+	GLint ImWidth, ImHeight, ImComponents;
+	GLenum ImFormat;
 public:
-	GLbyte* LoadTGAImage(const char* FileName, GLint* ImWidth, GLint* ImHeight, GLint* ImComponents, GLenum* ImFormat);
+	GLbyte* LoadTGAImage(const char* FileName);
+	Texture& setTexture();
+	GLuint getTetureID();
+	Texture& bindTexture();
 };
 

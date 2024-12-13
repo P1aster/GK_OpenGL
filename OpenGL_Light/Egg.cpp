@@ -167,7 +167,6 @@ void Egg::render_triangle() {
         // Handle connections to the next row
         for (int j = 0; j < density - 1; j++) {
             int level = density * (density - 2) + j - i * density + 1;
-
             if (j == density - 2) {
                 // Close the loop
                 glColor3fv(vertices[row_start].color);
