@@ -12,6 +12,8 @@
 #include "Camera.h"
 #include "MouseHandler.h"
 #include "Light.h"
+#include "Texture.h"
+#include <map>
 
 using namespace std;
 
@@ -21,6 +23,10 @@ Teapot teapot(2.0);
 Camera camera;
 Light light_1(GL_LIGHT0);
 Light light_2(GL_LIGHT1);
+Texture texture_1;
+Texture texture_2;
+std::map<int, GLuint> textureIDs;
+
 
 //Light light_2;
 MouseHandler mouseHandler;
@@ -31,6 +37,8 @@ GLdouble ZFar = 40.0f;
 static float angles[] = { 0.0, 0.0, 0.0 }; //Camera position
 int model = 1; // 1 - points, 2 - lines, 3 - triangles, 4 - teapot-wire, 5 - teapot-solid
 int mode = 1; // 1 - camera rotation, 2 - light_1 rotation, 3 - light_2 rotation
+int textureMode = 0; // 0 - texture off 1, 1 - texture on
+int currentTexture = 0;
 int verticesNumber; // Number of vertices
 GLdouble pix2angle = 1.0;  // Pixel to angle ratio
 
@@ -114,7 +122,6 @@ void render() {
     
     }
 
-
     camera.cameraLook(); // Apply camera transformations
 
     // Set light transformations
@@ -126,6 +133,18 @@ void render() {
     glRotatef(angles[0], 1, 0, 0);
     glRotatef(angles[1], 0, 1, 0);
     glRotatef(angles[2], 0, 0, 1);
+
+    switch (textureMode) {
+	case 1:
+		glDisable(GL_TEXTURE_2D);
+		break;
+	case 2:
+		glEnable(GL_TEXTURE_2D);
+        currentTexture = (currentTexture + 1) % textureIDs.size();
+        glBindTexture(GL_TEXTURE_2D, textureIDs[currentTexture]);
+
+		break;
+    }
 
     // Render the selected model
     switch (model) {
@@ -159,6 +178,15 @@ void render() {
 void keyboard_keys(unsigned char key, GLsizei x, GLsizei y)
 {
     switch (key) {
+    case 'j':
+		textureMode = 1;
+        break;
+    case 'k':
+        textureMode = 2;
+        break;
+    case 'l':
+        textureMode = 2;
+        break;
     case 'u':
 		mode = 1;
 		break;
@@ -246,6 +274,10 @@ void init_menu() {
 // Initialize OpenGL settings and scene objects
 void init() {
 
+    GLbyte* pBytes;
+    GLint ImWidth, ImHeight, ImComponents;
+    GLenum ImFormat;
+
     // Set the clear color for the color buffer to a dark gray shade (RGBA: 0.1, 0.1, 0.1, 1.0)
     // This color will be used when clearing the color buffer with glClear
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -264,6 +296,8 @@ void init() {
     // Apply lighting parameters similarly to light_1
     light_2.setColor(0.0f, 0.0f, 1.0f, 1.0f).setLightOptions();
 
+
+
     // Enable lighting calculations in OpenGL, allowing the scene to be lit by defined light sources
     glEnable(GL_LIGHTING);
 
@@ -271,12 +305,37 @@ void init() {
     light_1.enableLight();
     light_2.enableLight();
 
+
     // Enable depth testing to ensure correct rendering of objects based on their distance from the camera
     // This prevents closer objects from being obscured by farther ones
     glEnable(GL_DEPTH_TEST);
 
     // Set the shading model to smooth (Gouraud shading), which interpolates vertex colors across polygons
     glShadeModel(GL_SMOOTH);
+
+    GLuint textureID_1, textureID_2;
+    glGenTextures(1, &textureID_1);
+    glBindTexture(GL_TEXTURE_2D, textureID_1);
+    pBytes = texture_1.LoadTGAImage("tekstury/D1_t.tga", &ImWidth, &ImHeight, &ImComponents, &ImFormat);
+    glTexImage2D(GL_TEXTURE_2D, 0, ImComponents, ImWidth, ImHeight, 0, ImFormat, GL_UNSIGNED_BYTE, pBytes);
+    free(pBytes);
+
+
+    glGenTextures(1, &textureID_2);
+    glBindTexture(GL_TEXTURE_2D, textureID_2);
+	pBytes = texture_2.LoadTGAImage("tekstury/D2_t.tga", &ImWidth, &ImHeight, &ImComponents, &ImFormat);
+	glTexImage2D(GL_TEXTURE_2D, 0, ImComponents, ImWidth, ImHeight, 0, ImFormat, GL_UNSIGNED_BYTE, pBytes);
+	free(pBytes);
+
+	textureIDs[1] = textureID_1;
+	textureIDs[2] = textureID_2;
+
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, textureIDs[currentTexture]);
 }
 
 int main(int argc, char** argv) {
@@ -294,7 +353,7 @@ int main(int argc, char** argv) {
     glutInitWindowSize(600, 600);
 
     // create the window 
-    int window = glutCreateWindow("OpenGL LAB 4");
+    int window = glutCreateWindow("OpenGL LAB 5");
 
     glutDisplayFunc(render);
     glutReshapeFunc(update_viewport);

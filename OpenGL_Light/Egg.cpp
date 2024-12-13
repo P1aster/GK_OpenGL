@@ -19,6 +19,9 @@ void Egg::calculateVertexPosition(GLfloat u, GLfloat v, Vertex& vertex) {
     vertex.color[1] = 1.0f;
     vertex.color[2] = 1.0f;
 
+	vertex.texCoord[0] = u;
+	vertex.texCoord[1] = v;
+
     xU = (-450 * pow(u, 4) + 900 * pow(u, 3) - 810 * pow(u, 2) + 360 * u - 45) * cos(angle);
     xV = numbers::pi * (90 * pow(u, 5) - 225 * pow(u, 4) + 270 * pow(u, 3) - 180 * pow(u, 2) + 45 * u) * sin(angle);
     yU = 640 * pow(u, 3) - 960 * pow(u, 2) + 320 * u;
@@ -146,13 +149,17 @@ void Egg::render_triangle() {
         int row_start = density * i;
         int next_row_start = row_start + density;
 
+        GLfloat ui = static_cast<GLfloat>(i) / (density - 1);
+
         // Draw triangle strip for the row
         for (int j = 0; j < density; j++) {
             glColor3fv(vertices[row_start + j].color);
+            glTexCoord2fv(vertices[row_start + j].texCoord);
             glNormal3fv(vertices[row_start + j].normal);
             glVertex3fv(vertices[row_start + j].position);
 
             glColor3fv(vertices[next_row_start + j].color);
+            glTexCoord2fv(vertices[next_row_start + j].texCoord);
             glNormal3fv(vertices[next_row_start + j].normal);
             glVertex3fv(vertices[next_row_start + j].position);
         }
@@ -164,20 +171,24 @@ void Egg::render_triangle() {
             if (j == density - 2) {
                 // Close the loop
                 glColor3fv(vertices[row_start].color);
+                glTexCoord2fv(vertices[row_start].texCoord);
                 glNormal3fv(vertices[row_start].normal);
                 glVertex3fv(vertices[row_start].position);
 
                 glColor3fv(vertices[next_row_start].color);
+                glTexCoord2fv(vertices[next_row_start].texCoord);
                 glNormal3fv(vertices[next_row_start].normal);
                 glVertex3fv(vertices[next_row_start].position);
             }
             else {
                 // Add the next points in the strip
                 glColor3fv(vertices[level + density].color);
+                glTexCoord2fv(vertices[level + density].texCoord);
                 glNormal3fv(vertices[level + density].normal);
                 glVertex3fv(vertices[level + density].position);
 
                 glColor3fv(vertices[level].color);
+                glTexCoord2fv(vertices[level].texCoord);
                 glNormal3fv(vertices[level].normal);
                 glVertex3fv(vertices[level].position);
             }

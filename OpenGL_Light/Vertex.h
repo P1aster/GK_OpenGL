@@ -4,6 +4,7 @@ struct Vertex {
     GLfloat position[3]; // Position array: {x, y, z}
     GLfloat color[3];    // Color array: {r, g, b}
     GLfloat normal[3];   // Normal array: {x, y, z}
+	GLfloat texCoord[2]; // Texture coordinates array: {u, v}
 };
 
 
